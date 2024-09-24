@@ -1,43 +1,32 @@
 {
-  "name": "material-ui-cra-ts",
-  "version": "5.0.0",
-  "private": true,
+  "name": "simple-nft-sale",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "PORT=3010 vite",
+    "start": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
   "dependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@emotion/react": "latest",
     "@emotion/styled": "latest",
     "@imtbl/sdk": "^1.53.0",
+    "@mui/icons-material": "latest",
     "@mui/material": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
+    "form-data": "^4.0.0",
     "react": "latest",
     "react-dom": "latest",
-    "react-scripts": "latest",
-    "typescript": "latest"
-  },
-  "scripts": {
-    "start": "PORT=3010 react-app-rewired start",
-    "build": "react-app-rewired build",
-    "test": "react-app-rewired test",
-    "eject": "react-app-rewired eject"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "webpack": "^5.94.0"
   },
   "devDependencies": {
-    "assert-browserify": "^2.0.0",
-    "buffer": "^6.0.3",
+    "@types/node": "^22.6.1",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
     "crypto-browserify": "^3.12.0",
-    "react-app-rewired": "^2.2.1",
-    "stream-browserify": "^3.0.0"
+    "typescript": "latest",
+    "vite": "latest",
+    "vite-plugin-node-polyfills": "^0.22.0"
   }
 }
