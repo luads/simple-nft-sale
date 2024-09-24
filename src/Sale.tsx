@@ -7,7 +7,7 @@ import { Alert, Button, Card, CardActions, CardContent, CardMedia, Link, Modal }
 import Box from '@mui/material/Box';
 
 const collectionName = 'Sample sale';
-const passportClientId = 'A83orcPcF1jADHTjf5pjDNljOUBQnNLp';
+const passportClientId = 'QZdk3WiVFWwYe8jpH8N27qINGNHNffKc';
 
 
 export const Sale = () => {
@@ -40,8 +40,8 @@ export const Sale = () => {
   const passportConfig = {
     baseConfig,
     clientId: passportClientId,
-    redirectUri: `http://localhost:3010?login=true&environmentId=${environmentId}`,
-    logoutRedirectUri: `http://localhost:3010?logout=true&environmentId=${environmentId}`,
+    redirectUri: `https://beaded-efficient-goldfish.glitch.me/?login=true&environmentId=${environmentId}`,
+    logoutRedirectUri: `https://beaded-efficient-goldfish.glitch.me/?logout=true&environmentId=${environmentId}`,
     audience: 'platform_api',
     scope: 'openid offline_access email transact',
   };
@@ -62,7 +62,12 @@ export const Sale = () => {
     (async () => {
       const productsRequest = await fetch(`https://api.sandbox.immutable.com/v1/primary-sales/${environmentId}/products`);
       setProducts(await productsRequest.json());
+    })();
 
+  }, [environmentId]);
+
+  useEffect(() => {
+    (async () => {
       const widgets = await checkoutInstance.widgets({
         config: { theme: checkout.WidgetTheme.DARK },
       });
@@ -83,14 +88,14 @@ export const Sale = () => {
         console.log('success', data);
 
         if (data.transactionId) {
-          const hash = data.transactions.shift()?.hash;
+          const hash = data.transactions.pop()?.hash;
 
           setAlert({
             severity: 'success',
             message: (
               <>
-                Transaction successful.{' '}
-                <Link href={`https://explorer.testnet.immutable.com/tx/${hash}`}>Block explorer</Link>
+                Transaction successful. View it in the {' '}
+                <Link href={`https://explorer.testnet.immutable.com/tx/${hash}`}>block explorer</Link>
               </>
             ),
           });
