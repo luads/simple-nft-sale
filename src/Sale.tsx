@@ -28,10 +28,13 @@ export const Sale = () => {
   } | null>(null);
 
   const urlParams = new URLSearchParams(window.location.search);
-  const environment = config.Environment.SANDBOX;
-
   const environmentId = urlParams.get('environmentId') || '426e5b7a-84ff-45b5-a763-7ab0f41ceaaf';
   const login = urlParams.get('login') as string;
+
+  const isTestnet = !Boolean(urlParams.get('mainnet'));
+  const environment = isTestnet
+    ? config.Environment.SANDBOX
+    : config.Environment.PRODUCTION;
 
   const baseConfig = new config.ImmutableConfiguration({
     environment,
@@ -60,7 +63,7 @@ export const Sale = () => {
 
   useEffect(() => {
     (async () => {
-      const productsRequest = await fetch(`https://api.sandbox.immutable.com/v1/primary-sales/${environmentId}/products`);
+      const productsRequest = await fetch(`https://api${isTestnet ? '.sandbox' : ''}.immutable.com/v1/primary-sales/${environmentId}/products`);
       setProducts(await productsRequest.json());
     })();
 
@@ -97,7 +100,9 @@ export const Sale = () => {
             message: (
               <>
                 Transaction successful. View it in the {' '}
-                <Link href={`https://explorer.testnet.immutable.com/tx/${hash}`}>block explorer</Link>
+                <Link href={`https://explorer${isTestnet ? '.testnet' : ''}.immutable.com/tx/${hash}`}>
+                  block explorer
+                </Link>
               </>
             ),
           });
