@@ -189,16 +189,18 @@ export const Sale = () => {
               <Typography gutterBottom variant="h5" component="div">
                 {product.name}
               </Typography>
-              <Chip label="Free mint!" color="default" sx={{ mt: 1 }}/>
+              {product.pricing[0].amount === 0 ?? (
+                <Chip label="Free mint!" color="default" sx={{ mt: 1 }}/>
+              )}
             </Stack>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {product.description}
             </Typography>
-            {product.pricing[0].amount > 0 ?? (
+            {product.pricing[0].amount > 0 ? (
               <Typography variant="body1" sx={{ mt: 1 }}>
-                ${product.pricing[0].amount} ${product.pricing[0].currency}
+                {product.pricing[0].amount} {product.pricing[0].currency}
               </Typography>
-            )}
+            ) : ''}
           </CardContent>
           <CardActions>
             <Button size="small" onClick={() => {
