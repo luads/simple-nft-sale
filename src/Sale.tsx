@@ -1,9 +1,8 @@
-import * as React from "react";
-import { useEffect, useMemo } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 
-import Typography from "@mui/material/Typography";
+import Typography from '@mui/material/Typography';
 import { checkout, config, passport, x } from '@imtbl/sdk';
-import { Alert, Button, Card, CardActions, CardContent, CardMedia, Link, Modal } from '@mui/material';
+import { Alert, Button, Card, CardActions, CardContent, CardMedia, Chip, Link, Modal, Stack } from '@mui/material';
 import Box from '@mui/material/Box';
 
 const baseURL = 'http://localhost:3010';
@@ -12,8 +11,8 @@ const passportClientId = 'A83orcPcF1jADHTjf5pjDNljOUBQnNLp';
 
 
 export const Sale = () => {
-  const [saleWidget, setSaleWidget] = React.useState<checkout.Widget<typeof checkout.WidgetType.SALE> | null>(null);
-  const [products, setProducts] = React.useState<{
+  const [saleWidget, setSaleWidget] = useState<checkout.Widget<typeof checkout.WidgetType.SALE> | null>(null);
+  const [products, setProducts] = useState<{
     product_id: string;
     name: string;
     quantity: number;
@@ -22,16 +21,17 @@ export const Sale = () => {
     pricing: { amount: number; currency: string }[];
     collection: { collection_address: string; collection_type: string };
   }[]>([]);
-  const [saleOpen, setSaleOpen] = React.useState(false);
-  const [alert, setAlert] = React.useState<{
+  const [saleOpen, setSaleOpen] = useState(false);
+  const [alert, setAlert] = useState<{
     severity: 'success' | 'info' | 'warning' | 'error';
-    message: React.ReactNode | string;
+    message: ReactNode | string;
   } | null>(null);
 
   const urlParams = new URLSearchParams(window.location.search);
   const environment = config.Environment.SANDBOX;
 
   const environmentId = urlParams.get('environmentId') || '426e5b7a-84ff-45b5-a763-7ab0f41ceaaf';
+  const disableCardPayments = Boolean(urlParams.get('disableCards'));
   const login = urlParams.get('login') as string;
 
   const baseConfig = new config.ImmutableConfiguration({
@@ -41,15 +41,15 @@ export const Sale = () => {
   const passportConfig = {
     baseConfig,
     clientId: passportClientId,
-    redirectUri: `${baseURL}?login=true&environmentId=${environmentId}`,
-    logoutRedirectUri: `${baseURL}?logout=true&environmentId=${environmentId}`,
+    redirectUri: `${baseURL}?login=true&environmentId=${environmentId}&disableCards=${disableCardPayments}`,
+    logoutRedirectUri: `${baseURL}?logout=true&environmentId=${environmentId}&disableCards=${disableCardPayments}`,
     audience: 'platform_api',
     scope: 'openid offline_access email transact',
   };
 
   const passportInstance = useMemo(
     () => new passport.Passport(passportConfig),
-    []
+    [],
   );
 
   const checkoutInstance = useMemo(() => {
@@ -73,7 +73,9 @@ export const Sale = () => {
         config: { theme: checkout.WidgetTheme.DARK },
       });
 
-      setSaleWidget(widgets.create(checkout.WidgetType.SALE));
+      setSaleWidget(widgets.create(checkout.WidgetType.SALE, {
+        config: { theme: checkout.WidgetTheme.DARK, hideExcludedPaymentTypes: disableCardPayments },
+      }));
     })();
 
   }, [checkoutInstance]);
@@ -101,7 +103,7 @@ export const Sale = () => {
             ),
           });
         }
-      }
+      },
     );
     saleWidget.addListener(
       checkout.SaleEventType.FAILURE,
@@ -112,13 +114,13 @@ export const Sale = () => {
           severity: 'error',
           message: (data.error?.data as any)?.error?.reason || 'An error occurred',
         });
-      }
+      },
     );
     saleWidget.addListener(
       checkout.SaleEventType.TRANSACTION_SUCCESS,
       (data: checkout.SaleTransactionSuccess) => {
         console.log('tx success', data);
-      }
+      },
     );
 
     saleWidget.addListener(checkout.SaleEventType.CLOSE_WIDGET, () => {
@@ -145,6 +147,10 @@ export const Sale = () => {
         environmentId,
         collectionName,
         items,
+        excludePaymentTypes: disableCardPayments ? [
+          checkout.SalePaymentTypes.DEBIT,
+          checkout.SalePaymentTypes.CREDIT,
+        ] : [],
       });
     }, 500);
   }
@@ -169,15 +175,20 @@ export const Sale = () => {
             title={product.name}
           />
           <CardContent>
-            <Typography gutterBottom variant="h5" component="div">
-              {product.name}
-            </Typography>
+            <Stack direction="row" alignItems="center" alignContent="center" spacing={1} sx={{ mb: 1 }}>
+              <Typography gutterBottom variant="h5" component="div">
+                {product.name}
+              </Typography>
+              <Chip label="Free mint!" color="default" sx={{ mt: 1 }}/>
+            </Stack>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {product.description}
             </Typography>
-            <Typography variant="body1" sx={ { mt: 1 }}>
-              {product.pricing[0].amount} {product.pricing[0].currency}
-            </Typography>
+            {product.pricing[0].amount > 0 ?? (
+              <Typography variant="body1" sx={{ mt: 1 }}>
+                ${product.pricing[0].amount} ${product.pricing[0].currency}
+              </Typography>
+            )}
           </CardContent>
           <CardActions>
             <Button size="small" onClick={() => {
@@ -188,7 +199,9 @@ export const Sale = () => {
                 description: product.description,
                 image: product.image,
               }]);
-            }}>Buy now</Button>
+            }}>
+              {product.pricing[0].amount > 0 ? 'Buy now' : 'Mint for free'}
+            </Button>
           </CardActions>
         </Card>
       )) : (
