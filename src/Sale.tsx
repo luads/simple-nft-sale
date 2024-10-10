@@ -31,7 +31,6 @@ export const Sale = () => {
   const environment = config.Environment.SANDBOX;
 
   const environmentId = urlParams.get('environmentId') || '426e5b7a-84ff-45b5-a763-7ab0f41ceaaf';
-  const disableCardPayments = Boolean(urlParams.get('disableCards'));
   const login = urlParams.get('login') as string;
 
   const baseConfig = new config.ImmutableConfiguration({
@@ -41,8 +40,8 @@ export const Sale = () => {
   const passportConfig = {
     baseConfig,
     clientId: passportClientId,
-    redirectUri: `${baseURL}?login=true&environmentId=${environmentId}&disableCards=${disableCardPayments}`,
-    logoutRedirectUri: `${baseURL}?logout=true&environmentId=${environmentId}&disableCards=${disableCardPayments}`,
+    redirectUri: `${baseURL}/?login=true&environmentId=${environmentId}`,
+    logoutRedirectUri: `${baseURL}/?logout=true&environmentId=${environmentId}`,
     audience: 'platform_api',
     scope: 'openid offline_access email transact',
   };
@@ -74,7 +73,7 @@ export const Sale = () => {
       });
 
       setSaleWidget(widgets.create(checkout.WidgetType.SALE, {
-        config: { theme: checkout.WidgetTheme.DARK, hideExcludedPaymentTypes: disableCardPayments },
+        config: { theme: checkout.WidgetTheme.DARK, hideExcludedPaymentTypes: true },
       }));
     })();
 
@@ -140,6 +139,12 @@ export const Sale = () => {
       return;
     }
 
+    const isFreeMint = items.every((item) => {
+      const product = products.find((product) => product.product_id === item.productId);
+
+      return product?.pricing.every((pricing) => pricing.amount === 0);
+    });
+
     setSaleOpen(true);
 
     setTimeout(() => {
@@ -147,7 +152,7 @@ export const Sale = () => {
         environmentId,
         collectionName,
         items,
-        excludePaymentTypes: disableCardPayments ? [
+        excludePaymentTypes: isFreeMint ? [
           checkout.SalePaymentTypes.DEBIT,
           checkout.SalePaymentTypes.CREDIT,
         ] : [],
