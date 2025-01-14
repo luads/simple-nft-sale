@@ -5,10 +5,13 @@ import { checkout, config, passport, x } from '@imtbl/sdk';
 import { Alert, Button, Card, CardActions, CardContent, CardMedia, Chip, Link, Modal, Stack } from '@mui/material';
 import Box from '@mui/material/Box';
 
-const baseURL = 'http://localhost:3010';
-const collectionName = 'Simple sale';
-const passportClientId = 'A83orcPcF1jADHTjf5pjDNljOUBQnNLp';
+// const baseURL = 'http://localhost:3010';
+// const collectionName = 'Simple sale';
+// const passportClientId = 'A83orcPcF1jADHTjf5pjDNljOUBQnNLp';
 
+const baseURL = "https://nft-purchase.replit.app";
+const collectionName = "Simple sale";
+const passportClientId = "xCoAxEybu7aFFqmCFoc4n1k4IuXtSOuK";
 
 export const Sale = () => {
   const [saleWidget, setSaleWidget] = useState<checkout.Widget<typeof checkout.WidgetType.SALE> | null>(null);
