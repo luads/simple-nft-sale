@@ -1,16 +1,18 @@
-import { ReactNode, useEffect, useMemo, useState } from 'react';
-
 import Typography from '@mui/material/Typography';
-import { checkout, config, passport, x } from '@imtbl/sdk';
-import { Alert, Button, Card, CardActions, CardContent, CardMedia, Chip, Container, Link, Modal, Stack } from '@mui/material';
-import Box from '@mui/material/Box';
+import { Alert, Button, Card, CardActions, CardContent, CardMedia, Chip, Link, Stack } from '@mui/material';
+import Container from '@mui/material/Container';
+import { Modal } from '@mui/material';
+import { Box } from '@mui/material';
+import { config, passport } from '@imtbl/sdk';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { checkout } from '@imtbl/sdk';
+import { useAsyncMemo } from './hooks';
 
 const baseURL = "https://nft-purchase.replit.app";
 const collectionName = "Simple sale";
-const passportClientId = "6yvtF5Rxc2ybLEFcVLhQtEsDVnQ19VpZ";
+const passportClientId = "xCoAxEybu7aFFqmCFoc4n1k4IuXtSOuK";
 
-export const Sale = () => {
-  const [saleWidget, setSaleWidget] = useState<checkout.Widget<typeof checkout.WidgetType.SALE> | null>(null);
+export function Purchase() {
   const [products, setProducts] = useState<{
     product_id: string;
     name: string;
@@ -20,17 +22,17 @@ export const Sale = () => {
     pricing: { amount: number; currency: string }[];
     collection: { collection_address: string; collection_type: string };
   }[]>([]);
-  const [saleOpen, setSaleOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [alert, setAlert] = useState<{
     severity: 'success' | 'info' | 'warning' | 'error';
     message: ReactNode | string;
   } | null>(null);
 
   const urlParams = new URLSearchParams(window.location.search);
-  const environmentId = urlParams.get('environmentId') || '426e5b7a-84ff-45b5-a763-7ab0f41ceaaf';
+  const environmentId = urlParams.get('environmentId') || '82a81049-8c41-4ae3-91ca-0bd82a283abc';
   const login = urlParams.get('login') as string;
 
-  const isTestnet = !Boolean(urlParams.get('mainnet'));
+  const isTestnet = !!Boolean(urlParams.get('testnet'));
   const environment = isTestnet
     ? config.Environment.SANDBOX
     : config.Environment.PRODUCTION;
@@ -60,6 +62,11 @@ export const Sale = () => {
     });
   }, [passportInstance]);
 
+  const factory = useAsyncMemo(async () => {
+    if (!checkoutInstance) return undefined;
+    return checkoutInstance.widgets({ config: { theme: checkout.WidgetTheme.DARK, language: 'en' } });
+  }, [checkoutInstance, passportInstance]);
+
   useEffect(() => {
     (async () => {
       const productsRequest = await fetch(`https://api${isTestnet ? '.sandbox' : ''}.immutable.com/v1/primary-sales/${environmentId}/products`);
@@ -68,69 +75,46 @@ export const Sale = () => {
 
   }, [environmentId]);
 
+  const commerceWidget = useAsyncMemo(async () => {
+    if (factory === undefined) return undefined;
+
+    console.log('widget', await factory.create(checkout.WidgetType.IMMUTABLE_COMMERCE, {
+      config: {},
+    }))
+
+    return factory.create(checkout.WidgetType.IMMUTABLE_COMMERCE, {
+      config: {},
+    });
+  }, [factory]);
+
   useEffect(() => {
-    (async () => {
-      const widgets = await checkoutInstance.widgets({
-        config: { theme: checkout.WidgetTheme.DARK },
-      });
-
-      setSaleWidget(widgets.create(checkout.WidgetType.SALE, {
-        config: { theme: checkout.WidgetTheme.DARK, hideExcludedPaymentTypes: true },
-      }));
-    })();
-
-  }, [checkoutInstance]);
-
-  useEffect(() => {
-    if (!saleWidget) {
+    if (!commerceWidget) {
       return;
     }
 
-    saleWidget.addListener(
-      checkout.SaleEventType.SUCCESS,
-      (data: checkout.SaleSuccess) => {
-        console.log('success', data);
-
-        if (data.transactionId) {
-          const hash = data.transactions.pop()?.hash;
-
-          setAlert({
-            severity: 'success',
-            message: (
-              <>
-                Transaction successful. View it in the {' '}
-                <Link href={`https://explorer${isTestnet ? '.testnet' : ''}.immutable.com/tx/${hash}`}>
-                  block explorer
-                </Link>
-              </>
-            ),
-          });
-        }
-      },
-    );
-    saleWidget.addListener(
-      checkout.SaleEventType.FAILURE,
-      (data: checkout.SaleFailed) => {
+    commerceWidget.addListener(
+      checkout.CommerceEventType.FAILURE,
+      (data: checkout.CommerceFailureEvent) => {
         console.log('failure', data);
 
         setAlert({
           severity: 'error',
-          message: (data.error?.data as any)?.error?.reason || 'An error occurred',
+          message: (data.data as any)?.error?.reason || 'An error occurred',
         });
       },
     );
-    saleWidget.addListener(
-      checkout.SaleEventType.TRANSACTION_SUCCESS,
-      (data: checkout.SaleTransactionSuccess) => {
+    commerceWidget.addListener(
+      checkout.CommerceEventType.SUCCESS,
+      (data: checkout.CommerceSuccessEvent) => {
         console.log('tx success', data);
       },
     );
 
-    saleWidget.addListener(checkout.SaleEventType.CLOSE_WIDGET, () => {
-      setSaleOpen(false);
-      saleWidget.unmount();
+    commerceWidget.addListener(checkout.CommerceEventType.CLOSE, () => {
+      setModalOpen(false);
+      commerceWidget.unmount();
     });
-  }, [saleWidget]);
+  }, [commerceWidget]);
 
   useEffect(() => {
     if (passportInstance && login) {
@@ -138,28 +122,18 @@ export const Sale = () => {
     }
   }, [login, passportInstance]);
 
-  const handleSaleClick = (items: checkout.SaleItem[]) => {
-    if (!saleWidget) {
+  const handlePurchaseClick = (items: checkout.PurchaseItem[]) => {
+    if (!commerceWidget) {
       return;
     }
 
-    const isFreeMint = items.every((item) => {
-      const product = products.find((product) => product.product_id === item.productId);
-
-      return product?.pricing.every((pricing) => pricing.amount === 0);
-    });
-
-    setSaleOpen(true);
+    setModalOpen(true);
 
     setTimeout(() => {
-      saleWidget.mount('sale-widget', {
+      commerceWidget.mount('commerce-widget', {
+        flow: checkout.CommerceFlowType.PURCHASE,
         environmentId,
-        collectionName,
         items,
-        excludePaymentTypes: isFreeMint ? [
-          checkout.SalePaymentTypes.DEBIT,
-          checkout.SalePaymentTypes.CREDIT,
-        ] : [],
       });
     }, 500);
   }
@@ -168,7 +142,7 @@ export const Sale = () => {
     <Container maxWidth="sm">
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" sx={{ mb: 2 }}>
-          Simple NFT store
+          Sample direct NFT purchase
         </Typography>
 
         {alert && (
@@ -178,7 +152,7 @@ export const Sale = () => {
         )}
 
         {products.length > 0 ? products.map((product) => (
-          <Card key={product.product_id}>
+          <Card key={product.product_id} sx={{ mb: 2 }}>
             <CardMedia
               sx={{ height: 240 }}
               image={product.image}
@@ -189,22 +163,17 @@ export const Sale = () => {
                 <Typography gutterBottom variant="h5" component="div">
                   {product.name}
                 </Typography>
-                {product.pricing[0].amount === 0 && (
-                  <Chip label="Free mint!" color="default" sx={{ mt: 1 }}/>
-                )}
               </Stack>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 {product.description}
               </Typography>
-              {product.pricing[0].amount > 0 ? (
-                <Typography variant="body1" sx={{ mt: 1 }}>
-                  {product.pricing[0].amount} {product.pricing[0].currency}
-                </Typography>
-              ) : ''}
+              <Typography variant="body1" sx={{ mt: 1 }}>
+                {product.pricing[0].amount} {product.pricing[0].currency}
+              </Typography>
             </CardContent>
             <CardActions>
               <Button size="small" onClick={() => {
-                handleSaleClick([{
+                handlePurchaseClick([{
                   productId: product.product_id,
                   qty: 1,
                   name: product.name,
@@ -212,7 +181,7 @@ export const Sale = () => {
                   image: product.image,
                 }]);
               }}>
-                {product.pricing[0].amount > 0 ? 'Buy now' : 'Mint for free'}
+                Buy now
               </Button>
             </CardActions>
           </Card>
@@ -222,14 +191,14 @@ export const Sale = () => {
           </Typography>
         )}
 
-        <Modal open={saleOpen} onClose={() => setSaleOpen(false)}>
+        <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
           <Box sx={{
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             height: '100%',
           }}>
-            <div id="sale-widget"/>
+            <div id="commerce-widget"/>
           </Box>
         </Modal>
       </Box>
