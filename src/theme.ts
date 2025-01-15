@@ -17,7 +17,6 @@ const theme = createTheme({
       default: "#efefef"
     }
   },
-
 });
 
 export default theme;

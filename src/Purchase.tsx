@@ -1,5 +1,5 @@
 import Typography from '@mui/material/Typography';
-import { Alert, Button, Card, CardActions, CardContent, CardMedia, Chip, Link, Stack } from '@mui/material';
+import { Alert, Button, Card, CardActions, CardContent, CardMedia, Stack } from '@mui/material';
 import Container from '@mui/material/Container';
 import { Modal } from '@mui/material';
 import { Box } from '@mui/material';
@@ -9,7 +9,6 @@ import { checkout } from '@imtbl/sdk';
 import { useAsyncMemo } from './hooks';
 
 const baseURL = "https://nft-purchase.replit.app";
-const collectionName = "Simple sale";
 const passportClientId = "xCoAxEybu7aFFqmCFoc4n1k4IuXtSOuK";
 
 export function Purchase() {
@@ -199,7 +198,7 @@ export function Purchase() {
             alignItems: 'center',
             height: '100%',
           }}>
-            <div id="commerce-widget"/>
+            <div id="commerce-widget" style={{ color: 'rgb(243, 243, 243)' }} />
           </Box>
         </Modal>
       </Box>
