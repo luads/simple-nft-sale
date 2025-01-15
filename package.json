@@ -11,7 +11,7 @@
   "dependencies": {
     "@emotion/react": "latest",
     "@emotion/styled": "latest",
-    "@imtbl/sdk": "^1.77.5-alpha.1",
+    "@imtbl/sdk": "^1.77.5-alpha.5",
     "@mui/icons-material": "latest",
     "@mui/material": "latest",
     "form-data": "^4.0.0",
