@@ -21,6 +21,7 @@ export function Purchase() {
     image: string;
     pricing: { amount: number; currency: string }[];
     collection: { collection_address: string; collection_type: string };
+    status: string;
   }[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [alert, setAlert] = useState<{
@@ -151,7 +152,7 @@ export function Purchase() {
           </Alert>
         )}
 
-        {products.length > 0 ? products.map((product) => (
+        {products.length > 0 ? products.filter(p => p.status === 'active').map((product) => (
           <Card key={product.product_id} sx={{ mb: 2 }}>
             <CardMedia
               sx={{ height: 240 }}
