@@ -5,7 +5,7 @@ import { checkout, config, passport, x } from '@imtbl/sdk';
 import { Alert, Button, Card, CardActions, CardContent, CardMedia, Chip, Container, Link, Modal, Stack } from '@mui/material';
 import Box from '@mui/material/Box';
 
-const baseURL = "https://nft-purchase.replit.app";
+const baseURL = "https://simple-nft-sale.replit.app";
 const collectionName = "Simple sale";
 const passportClientId = "6yvtF5Rxc2ybLEFcVLhQtEsDVnQ19VpZ";
 
